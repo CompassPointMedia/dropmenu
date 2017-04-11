@@ -1,0 +1,36 @@
+{
+    "name": "compasspointmedia/julietmenu",
+    "description": "A Simple Menu Generator from Database.  Forked from secrethash/dropmenu",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Samuel Fullman",
+            "email": "sam-git@samuelfullman.com"
+        }
+    ],
+    "require": {
+        "illuminate/console": "^5.0",
+        "illuminate/support": "^5.0",
+        "illuminate/cache": "^5.0"
+    },
+    "autoload": {
+        "classmap": [
+            "src/commands",
+            "src/Model"
+        ],
+        "psr-4": {
+            "Compasspointmedia\\Julietmenu\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Compasspointmedia\\Julietmenu\\JulietmenuServiceProvider"
+            ],
+            "aliases": {
+                "Julietmenu": "Compasspointmedia\\Julietmenu\\JulietmenuFacade"
+            }
+        }
+    }
+}
