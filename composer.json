@@ -1,22 +1,18 @@
 {
-    "name": "secrethash/dropmenu",
-    "description": "A Simple Menu Generator from Database.",
+    "name": "compasspointmedia/dropmenu",
+    "description": "A Simple Menu Generator from Database.  Forked from secrethash/dropmenu",
     "type": "project",
     "license": "MIT",
     "authors": [
         {
-            "name": "Shashwat Mishra",
-            "email": "secrethash96@gmail.com"
+            "name": "Samuel Fullman",
+            "email": "sam-git@samuelfullman.com"
         }
     ],
     "require": {
         "illuminate/console": "^5.0",
         "illuminate/support": "^5.0",
         "illuminate/cache": "^5.0"
-    },
-    "suggest":{
-        "secrethash/trickster": "^1.2",
-        "secrethash/smsg": "^1.1.3"
     },
     "autoload": {
         "classmap": [
