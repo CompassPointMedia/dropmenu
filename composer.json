@@ -1,5 +1,5 @@
 {
-    "name": "compasspointmedia/dropmenu",
+    "name": "compasspointmedia/julietmenu",
     "description": "A Simple Menu Generator from Database.  Forked from secrethash/dropmenu",
     "type": "project",
     "license": "MIT",
@@ -20,16 +20,16 @@
             "src/Model"
         ],
         "psr-4": {
-            "Secrethash\\Dropmenu\\": "src/"
+            "Compasspointmedia\\Julietmenu\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Secrethash\\Dropmenu\\DropmenuServiceProvider"
+                "Compasspointmedia\\Julietmenu\\JulietmenuServiceProvider"
             ],
             "aliases": {
-                "Dropmenu": "Secrethash\\Dropmenu\\DropmenuFacade"
+                "Dropmenu": "Compasspointmedia\\Julietmenu\\JulietmenuFacade"
             }
         }
     }
