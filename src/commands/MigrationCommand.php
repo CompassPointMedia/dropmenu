@@ -1,13 +1,13 @@
 <?php
 
-namespace Secrethash\Dropmenu;
+namespace Compasspointmedia\Julietmenu;
 
 /**
  * This file is part of Menu Package,
  * a dynamic menu solution for Laravel.
  *
  * @license MIT
- * @package Secrethash\Menu
+ * @package Compasspointmedia\Menu
  */
 
 use Illuminate\Console\Command;
@@ -20,14 +20,14 @@ class MigrationCommand extends Command
      *
      * @var string
      */
-    protected $name = 'dropmenu:migration';
+    protected $name = 'julietmenu:migration';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Creates a migration for Database following the Secrethash\'s DropMenu specifications.';
+    protected $description = 'Creates a migration for Database following the Compasspointmedia\'s Juliet Menu specifications.';
 
     /**
      * Execute the console command.
@@ -36,7 +36,7 @@ class MigrationCommand extends Command
      */
     public function handle()
     {
-        $this->laravel->view->addNamespace('dropmenu', substr(__DIR__, 0, -8).'views');
+        $this->laravel->view->addNamespace('julietmenu', substr(__DIR__, 0, -8).'views');
 
 
         $this->line('');
@@ -85,9 +85,9 @@ class MigrationCommand extends Command
      */
     protected function createMigration()
     {
-        $migrationFile = base_path("/database/migrations")."/".date('Y_m_d_His')."_secrethash_dropmenu_tables.php";
+        $migrationFile = base_path("/database/migrations")."/".date('Y_m_d_His')."_compasspointmedia_julietmenu_tables.php";
 
-        $output = $this->laravel->view->make('dropmenu::generators.migration')->render();
+        $output = $this->laravel->view->make('julietmenu::generators.migration')->render();
 
         if (!file_exists($migrationFile) && $fs = fopen($migrationFile, 'x')) {
             fwrite($fs, $output);

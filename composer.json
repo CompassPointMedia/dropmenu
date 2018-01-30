@@ -29,7 +29,7 @@
                 "Compasspointmedia\\Julietmenu\\JulietmenuServiceProvider"
             ],
             "aliases": {
-                "Dropmenu": "Compasspointmedia\\Julietmenu\\JulietmenuFacade"
+                "Julietmenu": "Compasspointmedia\\Julietmenu\\JulietmenuFacade"
             }
         }
     }

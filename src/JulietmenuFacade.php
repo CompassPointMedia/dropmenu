@@ -1,18 +1,18 @@
 <?php
 
-namespace Secrethash\Dropmenu;
+namespace Compasspointmedia\Julietmenu;
 
 /**
- * This file is part of Dropmenu,
+ * This file is part of Julietmenu,
  * a simple Dynamic Dropdown Menu Generator
  *
  * @license MIT
- * @package Secrethash/Dropmenu
+ * @package Compasspointmedia/Julietmenu
  */
 
 use Illuminate\Support\Facades\Facade;
 
-class DropmenuFacade extends Facade
+class JulietmenuFacade extends Facade
 {
     /**
      * Get the registered name of the component.
@@ -21,6 +21,6 @@ class DropmenuFacade extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return 'dropmenu';
+        return 'julietmenu';
     }
 }

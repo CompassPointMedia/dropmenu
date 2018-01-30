@@ -1,10 +1,10 @@
 <?php
 
-namespace Secrethash\Dropmenu;
+namespace Compasspointmedia\Julietmenu;
 
 use Illuminate\Support\ServiceProvider;
 
-class DropmenuServiceProvider extends ServiceProvider
+class JulietmenuServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
@@ -20,7 +20,7 @@ class DropmenuServiceProvider extends ServiceProvider
         // $this->mergeConfigFrom($configPath, 'trickster');
 
         // Registers Commands
-        $this->commands('command.dropmenu.migration');
+        $this->commands('command.julietmenu.migration');
     }
 
     /**
@@ -30,7 +30,7 @@ class DropmenuServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->make('Secrethash\Dropmenu\Dropmenu');
+        $this->app->make('Compasspointmedia\Julietmenu\Julietmenu');
         
         $this->registerCommands();
         
@@ -39,8 +39,8 @@ class DropmenuServiceProvider extends ServiceProvider
     }
 
     private function bindFacade() {
-        $this->app->bind('dropmenu', function($app) {
-            return new Dropmenu();
+        $this->app->bind('julietmenu', function($app) {
+            return new Julietmenu();
         });
     }
 
@@ -52,7 +52,7 @@ class DropmenuServiceProvider extends ServiceProvider
      */
     private function registerCommands()
     {
-        $this->app->singleton('command.dropmenu.migration', function ($app) {
+        $this->app->singleton('command.julietmenu.migration', function ($app) {
             return new MigrationCommand();
         });
     }
@@ -65,7 +65,7 @@ class DropmenuServiceProvider extends ServiceProvider
     public function provides()
     {
         return [
-            'command.dropmenu.migration'
+            'command.julietmenu.migration'
         ];
     }
 }

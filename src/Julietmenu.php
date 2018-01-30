@@ -1,19 +1,20 @@
 <?php
 
-namespace Secrethash\Dropmenu;
+namespace Compasspointmedia\Julietmenu;
 
-use Secrethash\Dropmenu\Model\Menu as Menu;
+use Compasspointmedia\Julietmenu\Model\Menu as Menu;
 use Auth;
 use URL;
-use Secrethash\Trickster;
+use Compasspointmedia\Trickster;
 
-class Dropmenu {
+class Julietmenu {
 
     /**
     *# Displays the menus provided
     *# by the name and using the 
     *# settings that are provided.
-    *# 
+    *#
+    *# Developed by: Samuel Fullman <sam-git@samuelfullman.com>
     *# Created by: Shashwat Mishra <secrethash96@gmail.com>
     *# License: MIT (Given that Credits should be given)
     */

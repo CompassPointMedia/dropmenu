@@ -1,6 +1,6 @@
 <?php
 
-namespace Secrethash\Dropmenu\Model;
+namespace Compasspointmedia\Julietmenu\Model;
 
 use Illuminate\Database\Eloquent\Model;
 

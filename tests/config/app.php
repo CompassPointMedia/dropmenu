@@ -144,7 +144,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
-        Secrethash\Dropmenu\DropmenuServiceProvider::class,
+        Compasspointmedia\Julietmenu\JulietmenuServiceProvider::class,
     ],
 
     /*
