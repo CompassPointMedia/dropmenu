@@ -15,7 +15,7 @@ class Julietmenu {
     *# settings that are provided.
     *#
     *# Developed by: Samuel Fullman <sam-git@samuelfullman.com>
-    *# Created by: Shashwat Mishra <secrethash96@gmail.com>
+    *# Originally Created by: Shashwat Mishra <secrethash96@gmail.com>
     *# License: MIT (Given that Credits should be given)
     */
 
