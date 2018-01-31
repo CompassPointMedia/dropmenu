@@ -1,0 +1,1 @@
+-- the following SQL creates the two tables needed for menu hierarchy
