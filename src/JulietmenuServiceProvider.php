@@ -57,7 +57,7 @@ class JulietmenuServiceProvider extends ServiceProvider
             return new MigrationCommand();
         });
         $this->app->singleton('command.julietmenu.menu', function () {
-            return new MenuManagementCommand();
+            return new MenuManagerCommand();
         });
     }
 
