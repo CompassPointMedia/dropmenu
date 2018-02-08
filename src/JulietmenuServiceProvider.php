@@ -20,8 +20,8 @@ class JulietmenuServiceProvider extends ServiceProvider
         // $this->mergeConfigFrom($configPath, 'trickster');
 
         // Registers Commands
-        $this->commands('command.julietmenu.migration');
-        $this->commands('command.julietmenu.menu');
+        $this->commands('command.juliet.migration');
+        $this->commands('command.juliet.menu');
     }
 
     /**
@@ -53,10 +53,10 @@ class JulietmenuServiceProvider extends ServiceProvider
      */
     private function registerCommands()
     {
-        $this->app->singleton('command.julietmenu.migration', function ($app) {
+        $this->app->singleton('command.juliet.migration', function ($app) {
             return new MigrationCommand();
         });
-        $this->app->singleton('command.julietmenu.menu', function () {
+        $this->app->singleton('command.juliet.menu', function () {
             return new MenuManagerCommand();
         });
     }
@@ -69,8 +69,8 @@ class JulietmenuServiceProvider extends ServiceProvider
     public function provides()
     {
         return [
-            'command.julietmenu.migration',
-            'command.julietmenu.menu',
+            'command.juliet.migration',
+            'command.juliet.menu',
         ];
     }
 }

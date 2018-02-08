@@ -20,7 +20,7 @@ class MigrationCommand extends Command
      *
      * @var string
      */
-    protected $name = 'julietmenu:migration';
+    protected $name = 'juliet:migration';
 
     /**
      * The console command description.
@@ -36,7 +36,7 @@ class MigrationCommand extends Command
      */
     public function handle()
     {
-        $this->laravel->view->addNamespace('julietmenu', substr(__DIR__, 0, -8).'views');
+        $this->laravel->view->addNamespace('juliet', substr(__DIR__, 0, -8).'views');
 
 
         $this->line('');
