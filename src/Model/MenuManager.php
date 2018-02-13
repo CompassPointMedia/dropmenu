@@ -5,8 +5,12 @@ namespace Compasspointmedia\Julietmenu\Model;
 use Illuminate\Database\Eloquent\Model;
 use Compasspointmedia\Julietmenu\Model\JulietNode;
 use Compasspointmedia\Julietmenu\Model\JulietNodeHierarchy;
+use Compasspointmedia\Julietmenu\Model\JulietUtils as Utils;
+
 
 class MenuManager extends Model {
+
+    protected $groupDefaultName = 'default';
 
     public function __construct() {
         parent::__construct();
@@ -15,6 +19,38 @@ class MenuManager extends Model {
         $this->node = new JulietNode();
         $this->hierarchy = new JulietNodeHierarchy();
 
+    }
+
+
+    public function group($options = []){
+        $default = [
+            'name' => '',
+            'description' => '',
+            'no-create' => false,
+        ];
+        extract($options = array_merge($default, $options));
+
+        if(empty($name)) $name = $this->groupDefaultName;
+
+        // Group count should be small; let's get all group members.
+        $gid = false;
+        $a = $this->node->where('type', 'group')->select('id','name')->get()->toArray();
+        foreach ($a as $v) {
+            if ($match = Utils::match($name, [$v['id'], $v['name']])) {
+                $gid = $v['id'];
+            }
+        }
+        if (!$gid) {
+            if ($options['no-create']) return false;
+            // This block is responsible for creating a group record. Note a group does not require nodes by formal Juliet rules.
+            $save = new JulietNode();
+            $save->name = $name;
+            $save->description = ($options['description'] ? : '');
+            $save->type = 'group';
+            $save->save();
+            $gid = $save->id;
+        }
+        return $gid;
     }
 
     public function node($options = []){
@@ -127,18 +163,18 @@ class MenuManager extends Model {
 }
 /*
  * Rules:
- * A group is a self-existemt entity.  A group never functions as a node or an object. [2]
+ * A group is a self-existent entity.  A group never functions as a node or an object. [2]
  * Nodes attach to other nodes, or null, but never an object.
  * A node must be in at least one group.
  * A node can be in more than one group.
  * A node can have the same name as another node, but not in the same group on the same level.
  * A node can be re-used at several locations in a group. [3]
  * Objects need not be in any group, or under a node.
- * If an object is attached, it attaches to a node, never another object. [1]
+ * If an object is attached, it attaches to a node, never another object or group [1]
  * An object `should not` attach within a group more than once, but theoretically could.
  * A node can contain more than one object.
  *
  * [1] since this is true, the group_node_id must also be present for the object's id in child_node_id and the node id in parent_node_id, because the node can be in multiple groups, so all three are needed to make the relationship unambiguous.
  * [2] this means that a record of type `group` in juliet_nodes may have its id appear only in juliet_nodes_hierarchy.group_node_id
- * [3] think about this; if the node name was "Warranty Info", it might appear in a complex menu under several products or product types.  I means the same thing in each case, but the object under it pertain to a different product.  It makes sense to have that node "re-used" for each of these places.  This is the default behavior of the Juliet Menu creation system.
+ * [3] think about this; if the node name was "Warranty Info", it might appear in a complex menu under several products or product types.  It means the same thing in each case, but the object under it (page, pdf etc) pertains to a different product.  It makes sense to have that node "re-used" for each of these places.  This is the default behavior of the Juliet Menu creation system.
  */

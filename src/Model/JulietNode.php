@@ -12,4 +12,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class JulietNode extends Model{
 
+    protected $table = 'juliet_node';
+
+    protected $fillable = [
+        'id',
+        'name',
+    ];
+
 }

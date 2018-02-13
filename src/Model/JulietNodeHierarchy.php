@@ -12,5 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class JulietNodeHierarchy extends Model{
 
+    protected $table = 'juliet_node_hierarchy';
 
 }

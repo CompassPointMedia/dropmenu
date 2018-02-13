@@ -63,6 +63,7 @@ class MenuManagerCommand extends Command
     {--under= : Name or ID of the node another node or object should be under}
     {--before= : Name or ID of the node another node or object should be before}
     {--after= : Name or ID of the node another node or object should be after}
+    {--no-create : Do not create the element if it is not present}
     ';
 
     private $commands = [
@@ -70,6 +71,12 @@ class MenuManagerCommand extends Command
         'group' => [
             'description' => 'Create a taxonomic group with the specified name. Returns created or existing group id',
             'required' => [],
+            'options' => ['no-create'],
+            'unset' => ['group'],
+            'arg_map' => [
+                'arg1' => 'name',
+                'arg2' => 'description',
+            ],
         ],
         'node' => [
             'description' => 'Create a node (navigational node). Use --under to specify name or id of parent node and --group to specify taxonomy group (default taxonomy group is simply called `default`).  Returns created or existing node id',
@@ -148,6 +155,37 @@ class MenuManagerCommand extends Command
         unset($opts['no-interaction']);
         unset($opts['env']);
 
+        //Unset options with default values if specified
+        if(!empty($comm['unset'])){
+            foreach($comm['unset'] as $unset) unset($opts[$unset]);
+        }
+
+
+        //Unset disallowed options; we will tell them if they enter an irrelevant option for clarity
+        $disallowed = [];
+        $allowed = !empty($comm['options']) ? $comm['options'] : [];
+        foreach ($opts as $opt => $val) {
+            if(!is_null($val)){
+                if(!in_array($opt, $allowed)){
+                    //A non-null, non-allowed value; error.
+                    $disallowed[] = $opt;
+                }else{
+                    continue;
+                }
+            }
+            unset($opts[$opt]);
+        }
+        if($disallowed){
+            $last = array_pop($disallowed);
+            $str = implode('`, `', $disallowed);
+            $str = implode('` and `', $str ? [$str, $last] : [$last]);
+            $str = '`' . $str . '`';
+            $error = 'Error:';
+            $error .= ' Option' . ($disallowed ? 's ' : ' ') . $str . ($disallowed ? ' are' : ' is') . ' not allowed for the command "' . $command . '"';
+            $this->info($error);
+            exit;
+        }
+
         //Prepare arguments for method call - note options can override
         $args = array_merge($args, $opts);
 
@@ -193,11 +231,18 @@ class MenuManagerCommand extends Command
             $return = $this->menu->$command($args);
         }catch(\Exception $exception){
             $error = 'Error in ' . get_class($this->menu) . ':' . $command . '()' . "\n";
+            $error .= 'File: ' .$exception->getFile() . "\n";
+            $error .= 'Line: ' .$exception->getLine() . "\n";
             $error .= $exception->getMessage();
             $this->error($error);
             exit(self::EXIT_METHOD);
         }
 
+        //This might be modified if say the user demanded a verbose response etc.
+        //However the intended purpose is to pipe returned values as arguments to other commands.
+        if(!is_null($return) && !$this->option('no-interaction')) {
+            echo $return;
+        }
     }
 
     private function listCommands(){
