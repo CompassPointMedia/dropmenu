@@ -87,7 +87,7 @@ class MenuManagerCommand extends Command
             'validate' => [
                 'name'
             ],
-
+            'options' => ['no-create', 'group', 'before', 'after', 'under'],
         ],
         'object' => [
             'description' => 'Create an end object with the specified name.  Use --under optionally to specify an existing parent node id or name, and --primary to make it the primary object under that node'
@@ -95,10 +95,6 @@ class MenuManagerCommand extends Command
         'nodeobject' => [
             'description' => 'Create a new navigational node and a primary object.  Use --under, --before, or --after optionally to specify an existing parent node id or name, and --group to specify an existing group.  Using --group is only necessary when the node in the option is part of multiple groups.',
         ],
-        'something' => [
-
-        ],
-
     ];
 
     /**
@@ -241,7 +237,11 @@ class MenuManagerCommand extends Command
         //This might be modified if say the user demanded a verbose response etc.
         //However the intended purpose is to pipe returned values as arguments to other commands.
         if(!is_null($return) && !$this->option('no-interaction')) {
-            echo $return;
+            if(is_array($return)){
+                echo implode(',',$return);
+            }else{
+                echo $return;
+            }
         }
     }
 

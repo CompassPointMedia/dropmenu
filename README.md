@@ -18,3 +18,5 @@ We are working on it constantly to make things right and get things on the right
 
 # Full Documentation
 The full documentation on **Usage**, **Installation**, **Configuration** can be found here: [compasspointmedia.github.io/julietmenu](https://compasspointmedia.github.com/julietmenu)
+
+Things to do:
