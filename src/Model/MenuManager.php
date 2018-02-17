@@ -376,8 +376,6 @@ class MenuManager extends Model {
         $start = microtime(true);
         $ancestors = $this->ancestors($gid, $nid, ['output' => 'all']);
 
-        print_r($ancestors);
-        exit;
         $path = Utils::array_by_key($ancestors, 'name');
         array_walk($path, [$this, 'pretty_url']);
 
