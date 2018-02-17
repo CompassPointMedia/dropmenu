@@ -14,6 +14,12 @@ class MenuManager extends Model {
 
     protected $groupDefaultName = 'default';
 
+    /**
+     * This is a failsafe against infinite recursion probably due to bad code writing
+     * @var int recursionStop
+     */
+    protected $recursionStop = 15;
+
     const ALWAYS_CREATE = 1;    // most picky method; always create a node even if the name is exactly the same
     const REUSE_IN_GROUP = 2;
     const REUSE_ALWAYS = 3;     // least picky method
@@ -73,17 +79,16 @@ class MenuManager extends Model {
 
     public function node($arguments = []){
         /*
-         * so we are doing something like this
+         * So we can do stuff like this:
          *
-         * artisan juliet:menu node Home            create that node (in default group)
-         * artisan juliet:menu node Home --under A  create under A (and A must exist in the group)
-         * artisan juliet:menu node Home --after B  create after B (ditto for this position)
+         * artisan juliet:menu node Dog                  create that node (in default group)
+         * artisan juliet:menu node Dog --under Animals  create under Animals (and Animals must exist in the group)
+         * artisan juliet:menu node Dog --after Cat      create after Cat (ditto, must exist in this position)
          *
-         * Now there are three creation types based on a node name match:
+         * Note there are three creation types based on a node name match:
          * Create it even if it exists at all               (most picky)
          * Reuse it if it's present in this group
          * Reuse it if it's present in any group            (least picky)
-         *
          */
         // specifications for this method
         $default = [
@@ -93,6 +98,7 @@ class MenuManager extends Model {
             'under' => '',
             'before' => '',
             'after' => '',
+            'return-node-id' => false,              //return a node's id only if present
         ];
         // process arguments
         extract($arguments = array_merge($default, $arguments));
@@ -162,6 +168,11 @@ class MenuManager extends Model {
                     break;
                 }
             }
+        }
+
+        if($arguments['return-node-id']){
+            //Simply return the found node id - even not present
+            return $nid;
         }
 
         // handle any position that is not at the root
@@ -302,34 +313,263 @@ class MenuManager extends Model {
             $uid ? : 'NULL',
         ];
     }
+
     public function nodeObject(){
+        exit('here');
+    }
+
+    public function object(){
 
     }
-}
-/*
- * Rules:
- * A group is a self-existent entity (think tree).  A group never functions as a node or an object. [2]
- * A group may exist without any attachments in juliet_node_hierarchy
- * Nodes represent taxonomic and conceptual organization (think branch), not content
- * Objects represent content (think fruit)
- * Nodes attach to other nodes, or null, but never an object.
- * A node must be in at least one group. [4]
- * A node can be in more than one group.
- * A node can have the same name as another node, but not in the same group on the same level.
- * A node can be used at several locations in a group. [3]
- * Objects need not be in any group, or under a node (think, a fruit is still a fruit off the tree, you can eat it).
- * If an object is attached, it attaches to a node, never another object or group [1]
- * An object `should not` attach within a group more than once, but theoretically could.
- * A node can contain more than one object (think multiple fruits from one twig).
- * If a node has multiple objects, one is the primary.
- *
- * [1] since this is true, the group_node_id must also be present for the object's id in child_node_id and the node id in parent_node_id, because the node can be in multiple groups, so all three are needed to make the relationship unambiguous.
- * [2] this means that a record of type `group` in juliet_nodes may have its id appear only in juliet_nodes_hierarchy.group_node_id
- * [3] think about this; if the node name was "Warranty Info", it might appear in a complex menu under several products or product types.  It means the same thing in each case, but the object under it (page, pdf etc) pertains to a different product.  It makes sense to have that node "re-used" for each of these places.  This is the default behavior of the Juliet Menu creation system.
- * [4] this rule is negotiable; but it's preferred
- *
- *
- *
- *
- */
 
+    /**
+     * Generate structure including container information.  This can handle lazy loading if either a node name or ID is provided correctly.
+     *
+     * @param array $arguments
+     * @throws \Exception
+     */
+    public function structure($arguments = []){
+        // specifications for this method
+        $default = [
+            'group' => $this->groupDefaultName,
+            'node' => '',
+            'settings' => '',
+        ];
+        // process arguments
+        extract($arguments = array_merge($default, $arguments));
+
+        // required arguments
+        if(!strlen(trim($group))){
+            throw new \Exception('A group name is required');
+        }
+
+        // handle group id; note we prevent them from creating a new group that doesn't exist yet on-the-fly.
+        if($gid = $this->group([
+            'group' => $group,
+            'no-create' => true,
+        ])) {
+            // group is recognized, we have id
+        } else {
+            //todo: `groups` is not yet created!
+            $error = 'You cannot create a group ('.$group.') on-the-fly; type `artisan ' . MenuManagerCommand::META_SIGNATURE_NAME . ' groups` to get a list of all groups and their id numbers.';
+            throw new \Exception($error);
+        }
+
+        //load a section of this structure for lazy loading or partial menu
+        if($node){
+            if ($nid = $this->node([
+                'name' => $node,
+                'group' => $group,
+                'no-create' => true,
+                'return-node-id' => true,
+            ])){
+               //Ready to process
+            }else{
+                $error = 'You requested a specific node ('.$node.') which was not found';
+                throw new \Exception($error);
+            }
+        }else{
+            $nid = NULL;
+        }
+
+        //now that we have the gid and nid, let's find the initial level and base_uri
+        $start = microtime(true);
+        $ancestors = $this->ancestors($gid, $nid, ['output' => 'all']);
+
+        print_r($ancestors);
+        exit;
+        $path = Utils::array_by_key($ancestors, 'name');
+        array_walk($path, [$this, 'pretty_url']);
+
+        $base_uri = '/'.implode('/', $path);
+        $config['base_uri'] = $base_uri;
+
+        $results = $this->structure_map($gid, $nid, count($ancestors), $config);
+        $stop = microtime(true);
+
+        //todo: we need the group name here but I don't want to execute that query in this scope
+        $results = [
+            'group_node_id' => $gid,
+            'node_id' => $nid ? : '',
+            'level' => count($ancestors),
+            'base_uri' => $base_uri,
+            'children' => $results,
+            'fetched_at' => date('Y-m-d H:i:s', floor($start)),
+            'fetch_time_elapsed' => round($stop - $start, 4),
+        ];
+        if(!empty($settings)){
+            $results['settings'] = $settings;
+        }
+        print_r($results);
+
+    }
+
+    /**
+     * todo: this definitely needs to be abstracted
+     * we want user to be able to call their own engine for prettifying this
+     * also.. not here but on the $path, this includes replacement strategies, skipping certain nodes so we don't end up with stupid stuff like /cleveland/services/services etc.
+     *
+     * @param $val
+     * @param null $key
+     * @return mixed|string
+     */
+    function pretty_url(&$val, $key = NULL)
+    {
+        $val = trim($val);
+        $val = strtolower($val);
+        $val = preg_replace('/[^a-z0-9_]+/', '', $val);
+        $val = str_replace(' ','-',$val);
+        $val = str_replace('--', '-', $val);
+        $val = str_replace('--', '-', $val);
+        return $val;
+    }
+
+    /**
+     * Ancestors: get information about ancestors of a specified node
+     *  - returns empty (count = 0) for a root level node [$nid = NULL]
+     *  - returns parent/root (count = 1) for level 1 menu items
+     *  - etc.
+     * So, ancestors is a list of nodes _above_me_
+     * Therefore my level is count($ancestors) + 1
+     *
+     * @param $gid
+     * @param $nid
+     * @param array $options
+     * @param array $return
+     * @param array $config
+     * @return array
+     * @throws \Exception
+     */
+    public function ancestors($gid, $nid, $options = [], $return = [], $config = []){
+        $default = [
+            'output' => 'all',       //options are: all, id, and name
+        ];
+        $config['level'] = empty($config['level']) ? 1 : $config['level'];
+        extract($options = array_merge($default, $options));
+
+        if(is_null($nid)) return [];
+
+        if(!$gid){
+            throw new \Exception('You must pass a group id');
+        }
+
+        switch ($output){
+            case 'id':
+                $select = '';
+                $join = '';
+                break;
+            case 'name':
+                $select = ', n.name';
+                $join = 'JOIN juliet_node n ON h.node_id = n.id';
+                break;
+            case 'all':
+                $select = ', n.name, n.description';
+                $join = 'JOIN juliet_node n ON h.node_id = n.id';
+                break;
+            default:
+                throw new \Exception('An output option of `id`, `name`, or `all` is required');
+        }
+
+        $sql = "SELECT
+        h.parent_node_id, h.node_id AS id $select
+        FROM juliet_node_hierarchy h $join
+        WHERE h.group_node_id = :gid AND h.node_id = :nid
+        ";
+        if($config['level'] > $this->recursionStop){
+            throw new \Exception('You have gone up ancestry more than '.$this->recursionStop.' times');
+        }
+        $params = ['gid' => $gid, 'nid' => $nid];
+
+        if($result = \DB::select(\DB::raw($sql), $params)){
+            $result = get_object_vars($result[0]);
+            if($output === 'all'){
+                $temp = [$result];
+                foreach($return as $node) $temp[] = $node;
+                $return = $temp;
+            }else{
+                $temp = [$result[$output]];
+                foreach($return as $node) $temp[] = $node;
+                $return = $temp;
+            }
+
+            //recursion for parent
+            if($result['parent_node_id']){
+                $config['level']++;
+                $return = $this->ancestors($gid, $result['parent_node_id'], $options, $return, $config);
+            }
+        }
+        return $return;
+    }
+
+    /**
+     * Structure map: returns a PHP recursive array of a menu structure at any location (but default is the root)
+     * Attaches the actual level to all children.  Level 1, 2, etc. represent the actual level on the menu (not zero-based)
+     *
+     * @param $gid
+     * @param null $id
+     * @param int $level
+     * @param array $config
+     * @return array
+     * @throws \Exception
+     */
+    public function structure_map($gid, $id = NULL, $level = 0, $config = []){
+
+        $sql = "SELECT
+        n.id, n.name, n.description, n.active, n.uri, n.created_at, n.updated_at, h.priority,
+        n2.id AS obj_id,
+        n2.name AS obj_name,
+        n2.description AS obj_description,
+        n2.active AS object_active,
+        n3.id AS secondary_id,
+        n3.name AS secondary_name,
+        n3.description AS secondary_description
+        
+        FROM juliet_node_hierarchy h 
+        JOIN juliet_node n ON h.node_id = n.id AND n.type = 'node'
+        -- todo: document query logic here; this is probably not great for very large node tables
+        LEFT JOIN
+        (juliet_node_hierarchy h2 JOIN juliet_node n2 ON h2.node_id = n2.id AND n2.type = 'object' AND h2.rlx = 'Primary')  
+        ON h2.group_node_id = :gid2 AND h2.parent_node_id = h.node_id
+        LEFT JOIN
+        (juliet_node_hierarchy h3 JOIN juliet_node n3 ON h3.node_id = n3.id AND n3.type = 'object' AND h3.rlx = 'Secondary')
+        ON h3.group_node_id = :gid3 AND h3.parent_node_id = h.node_id  
+        WHERE h.group_node_id = :gid AND h.parent_node_id " . (is_null($id) ? 'IS NULL' : " = :id") . "
+
+        ORDER BY h.priority, h.created_at";
+        $params = ['gid' => $gid, 'gid2' => $gid, 'gid3' => $gid];
+        if(!is_null($id)) $params['id'] = $id;
+        $results = \DB::select(\DB::raw($sql), $params);
+
+
+        //return empty array for no children
+        if(!$results) return [];
+
+        if($this->recursionStop && $level > $this->recursionStop){
+            throw new \Exception('Currently this method does not go more than 15 levels of recursion deep');
+        }
+
+        foreach($results as $key => $result){
+            if(!isset($ids[$result->id])){
+                //simplify result
+                $result = get_object_vars($result);
+
+                $sub_config = $config;
+                $name = $result['name'];
+                $sub_config['base_uri'] = (!empty($sub_config['base_uri']) ? rtrim($sub_config['base_uri'], '/') : '') . '/' . $this->pretty_url($name);
+
+                $results[$key] = $result;
+                $results[$key]['level'] = $level + 1;
+                $results[$key]['base_uri'] = $sub_config['base_uri'];
+
+                $children = $this->structure_map($gid, $result['id'], $level + 1, $sub_config);
+                if($children) $results[$key]['children'] = $children;
+
+                $ids[$result['id']] = $key;
+            }else{
+                $_key = $ids[$result->id];
+                unset($results[$key]);
+            }
+        }
+        return $results;
+    }
+}

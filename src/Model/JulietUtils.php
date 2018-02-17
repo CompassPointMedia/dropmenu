@@ -80,4 +80,15 @@ class JulietUtils {
         }
         return false;
     }
+
+    static function array_by_key($array, $key){
+        if(empty($array)) return [];
+        $return = [];
+        foreach ($array as $v){
+            if(isset($v[$key])){
+                $return[] = $v[$key];
+            }
+        }
+        return $return;
+    }
 }

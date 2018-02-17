@@ -63,6 +63,8 @@ class MenuManagerCommand extends Command
     {--under= : Name or ID of the node another node or object should be under}
     {--before= : Name or ID of the node another node or object should be before}
     {--after= : Name or ID of the node another node or object should be after}
+    {--node= : Node name or ID}
+    {--settings= : Pass a json string for settings}
     {--no-create : Do not create the element if it is not present}
     ';
 
@@ -89,12 +91,35 @@ class MenuManagerCommand extends Command
             ],
             'options' => ['no-create', 'group', 'before', 'after', 'under'],
         ],
-        'object' => [
-            'description' => 'Create an end object with the specified name.  Use --under optionally to specify an existing parent node id or name, and --primary to make it the primary object under that node'
-        ],
         'nodeobject' => [
-            'description' => 'Create a new navigational node and a primary object.  Use --under, --before, or --after optionally to specify an existing parent node id or name, and --group to specify an existing group.  Using --group is only necessary when the node in the option is part of multiple groups.',
+            'description' => 'Create a new navigational node and a primary object.  Use --under, --before, or --after optionally to specify an existing parent node id or name, and --group to specify an existing group.  Using --group is only necessary when the node in the option is part of multiple groups.  Note: this can only be used to create a new navigational node and object together.  Use `'.self::META_SIGNATURE_NAME.' object {object-name} --under {existing-node-name}` to create a new object under an existing node',
+            'arg_map' => [
+                'arg1' => 'name',
+                'arg2' => 'description',
+            ],
+            'validate' => [
+                'name'
+            ],
+            'options' => ['no-create', 'group', 'before', 'after', 'under'],
         ],
+        'object' => [
+            'description' => 'Create an end object with the specified name.  Use --under optionally to specify an existing parent node id or name, and --primary to make it the primary object under that node',
+            'arg_map' => [
+                'arg1' => 'name',
+                'arg2' => 'description',
+            ],
+            'validate' => [
+                'name'
+            ],
+            'options' => ['no-create', 'group', 'before', 'after', 'under'],
+        ],
+        'structure' => [
+            'description' => 'Return a CLI output of a given menu structure, or the default group if not specified.  Use --node to "lazy load" a portion of the structure.  The node must exist in the group',
+            'arg_map' => [ 'arg1' => 'group' ],
+            'validate' => [ 'group' ],
+            'options' => ['node', 'settings', 'group'],
+            'unset' => [ 'no-create'],
+        ]
     ];
 
     /**

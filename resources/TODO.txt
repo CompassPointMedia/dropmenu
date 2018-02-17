@@ -1,0 +1,24 @@
+2/17/2018
+---------
+Developing this there are a number of great thoughts and ideas coming to me as I begin to appreciate what this package can become.  This file is designed to write them down somewhere so they're not forgotten.
+
+Big two are how extensively Juliet should be able to generate a menu.  One: We should be able to have dynamic values based on a callback to an external method, for example under Products would be lists and sublists that would work with Juliet to create the structure.  And the URIs should be allowed to process through an engine, or a relationship in the actual Route:: object which I would have extended.
+
+Two: the cool things we're doing in Artisan like entering `artisan juliet:menu nodeobject Carpentry --under Services` should NOT be doable by an outside person through any API.  Build in security to make sure this does not happen.  Need to tie in with some Auth:: class.
+
+And thirdly: Imagine a UI/UX backend that would allow me to manage this seamlessly and flawlessly and create the menu on the fly, or even on the live site if I was logged in.  This is approaching what I wanted the Juliet project to accomplish.
+
+Lastly: Imagine storing menu states for rollback, and an AI engine auto-configuring the menu structure based on live usage, as well as notifying admin of this.
+
+---------
+
+Some of the todos taken from the code and moved here:
+
+todo: go through the todos :)
+for nodeobject: we need a --secondary and --primary option
+identify some "pretty" fields like Category etc and add them only if non-null, or always-add - make it happen as a setting
+we need to remove NULL values from the output or convert to '' if they are expected
+just go with ONLY_FULL_GROUP_BY and live with it
+      ^> we need to compress the keys starting at zero
+we should probably indicate the other Secondary pages under the node
+
