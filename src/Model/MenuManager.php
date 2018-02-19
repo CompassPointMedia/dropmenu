@@ -77,19 +77,14 @@ class MenuManager extends Model {
         return $gid;
     }
 
+    /**
+     * Node-Object: given a group, create or recycle a node, optionally located under or adjacent to another node
+     *
+     * @param array $arguments
+     * @return array
+     * @throws \Exception
+     */
     public function node($arguments = []){
-        /*
-         * So we can do stuff like this:
-         *
-         * artisan juliet:menu node Dog                  create that node (in default group)
-         * artisan juliet:menu node Dog --under Animals  create under Animals (and Animals must exist in the group)
-         * artisan juliet:menu node Dog --after Cat      create after Cat (ditto, must exist in this position)
-         *
-         * Note there are three creation types based on a node name match:
-         * Create it even if it exists at all               (most picky)
-         * Reuse it if it's present in this group
-         * Reuse it if it's present in any group            (least picky)
-         */
         // specifications for this method
         $default = [
             'name' => '',
@@ -98,7 +93,7 @@ class MenuManager extends Model {
             'under' => '',
             'before' => '',
             'after' => '',
-            'return-node-id' => false,              //return a node's id only if present
+            'return-node-id' => false,              //return a node's id only, if present
         ];
         // process arguments
         extract($arguments = array_merge($default, $arguments));
@@ -314,11 +309,113 @@ class MenuManager extends Model {
         ];
     }
 
-    public function nodeObject(){
-        exit('here');
+    public function nodeObject($arguments = []){
+        // specifications for this method
+        $default = [
+            'name' => '',
+            'description' => '',
+            'object-name' => '',                    //if different from node
+            'object-description' => '',
+            'group' => $this->groupDefaultName,
+            'under' => '',
+            'before' => '',
+            'after' => '',
+            'primary' => '',
+            'secondary' => '',
+            'return-node-id' => false,              //return a node's id only, if present
+        ];
+
+        // process arguments
+        extract($arguments = array_merge($default, $arguments));
+
+        // required arguments
+        if(!strlen(trim($name))){
+            throw new \Exception('A name is required');
+        }
+
+        if($arguments['before'] && $arguments['after']){
+            $error = 'You specified both a --before and --after option.  You can only select one';
+            throw new \Exception($error);
+        }
+
+        $node = $this->node([
+            'name' => $arguments['name'],
+            'description' => $arguments['description'],
+            'group' => $arguments['group'],
+            'under' => $arguments['under'] ? : '',
+            'before' => $arguments['before'] ? : '',
+            'after' => $arguments['after'] ? : '',
+
+        ]);
+        if(!$node){
+            throw new \Exception('Call to method node() did not return any values');
+        }
+
+        $oid = $this->object([
+            'name' => $arguments['object-name'] ? : $arguments['name'],
+            'description' => $arguments['object-description'] ? : $arguments['description'],
+            'create' => true,
+        ]);
+
+        //Save the record in hierarchy
+        $save = new JulietNodeHierarchy();
+        $save->node_id = $oid;
+        $save->parent_node_id = $node[1];
+        $save->group_node_id = $node[0];
+        $save->rlx = $secondary? 'Secondary' : 'Primary';
+        $save->save();
+
+        return [
+            $save->group_node_id,
+            $oid,
+            $save->parent_node_id
+        ];
     }
 
-    public function object(){
+    public function object($arguments = []){
+        $default = [
+            'name' => '',
+            'description' => '',
+            'uri' => NULL,
+            'create' => false,
+        ];
+
+        // process arguments
+        extract($arguments = array_merge($default, $arguments));
+
+        // required arguments
+        if(!strlen(trim($name))){
+            throw new \Exception('An object name or id is required');
+        }
+
+        $sql = "SELECT
+        n.id, n.name, n.description FROM juliet_node n WHERE n.type='object' AND :name IN(n.id, n.name) 
+        ";
+        $params = ['name' => $name];
+        $results = \DB::select(\DB::raw($sql), $params);
+        if(!$results) {
+            //just create it
+            if(is_numeric($name)){
+                throw new \Exception('No object with id of '.$name. ' was found');
+            }
+        }else{
+            if($create){
+                throw new \Exception('An object with this name or id ('.$name.') already exists');
+            }
+            //we could address more than one result, not done
+            foreach($results as $result){
+                $result = get_object_vars($result);
+                return $result['id'];
+            }
+        }
+
+        $save = new JulietNode();
+        $save->name = $name;
+        $save->description = $arguments['description'] ? : '';
+        $save->uri = $arguments['uri'];
+        $save->type = 'object';
+        $save->save();
+        return $save->id;
 
     }
 
@@ -334,6 +431,7 @@ class MenuManager extends Model {
             'group' => $this->groupDefaultName,
             'node' => '',
             'settings' => '',
+            'lean' => '',
         ];
         // process arguments
         extract($arguments = array_merge($default, $arguments));
@@ -381,7 +479,7 @@ class MenuManager extends Model {
 
         $base_uri = '/'.implode('/', $path);
         $config['base_uri'] = $base_uri;
-
+        $config['lean'] = $arguments['lean'];
         $results = $this->structure_map($gid, $nid, count($ancestors), $config);
         $stop = microtime(true);
 
@@ -558,6 +656,12 @@ class MenuManager extends Model {
                 $results[$key] = $result;
                 $results[$key]['level'] = $level + 1;
                 $results[$key]['base_uri'] = $sub_config['base_uri'];
+
+                if($config['lean']){
+                    foreach($results[$key] as $n=>$v){
+                        if(!strlen($v) || $n==='created_at' || $n==='updated_at') unset($results[$key][$n]);
+                    }
+                }
 
                 $children = $this->structure_map($gid, $result['id'], $level + 1, $sub_config);
                 if($children) $results[$key]['children'] = $children;

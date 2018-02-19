@@ -22,3 +22,18 @@ just go with ONLY_FULL_GROUP_BY and live with it
       ^> we need to compress the keys starting at zero
 we should probably indicate the other Secondary pages under the node
 
+
+
+Incorporate these in documentation:
+        /*
+         * So we can do stuff like this:
+         *
+         * artisan juliet:menu node Dog                  create that node (in default group)
+         * artisan juliet:menu node Dog --under Animals  create under Animals (and Animals must exist in the group)
+         * artisan juliet:menu node Dog --after Cat      create after Cat (ditto, must exist in this position)
+         *
+         * Note there are three creation types based on a node name match:
+         * Create it even if it exists at all               (most picky)
+         * Reuse it if it's present in this group
+         * Reuse it if it's present in any group            (least picky)
+         */

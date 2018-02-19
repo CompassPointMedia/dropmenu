@@ -65,8 +65,17 @@ class MenuManagerCommand extends Command
     {--after= : Name or ID of the node another node or object should be after}
     {--node= : Node name or ID}
     {--settings= : Pass a json string for settings}
+    {--object-name= : Name of object if different from node}
+    {--object-description= : Description of object if different from node}
+    {--uri= : URI of node or object}
     {--no-create : Do not create the element if it is not present}
+    {--create : Create the element}
+    {--primary : Make an object the primary object even if another node is present}
+    {--secondary : Make an object the secondary object even if there is no primary}
+    {--lean : Lean output}
     ';
+
+    protected $optionDefaults = ['group'];
 
     private $commands = [
         'commands' => [],
@@ -81,7 +90,7 @@ class MenuManagerCommand extends Command
             ],
         ],
         'node' => [
-            'description' => 'Create a node (navigational node). Use --under to specify name or id of parent node and --group to specify taxonomy group (default taxonomy group is simply called `default`).  Returns created or existing node id',
+            'description' => 'Create a node (navigational node). Use --under to specify name or id of parent node and --group to specify taxonomy group (default taxonomy group is simply called `default`).  Returns an array of the group id, created node id, and the parent node id (or NULL)',
             'arg_map' => [
                 'arg1' => 'name',
                 'arg2' => 'description',
@@ -100,7 +109,10 @@ class MenuManagerCommand extends Command
             'validate' => [
                 'name'
             ],
-            'options' => ['no-create', 'group', 'before', 'after', 'under'],
+            'options' => [
+                'no-create', 'group', 'before', 'after', 'under', 'primary', 'secondary', 'uri',
+                'object-name', 'object-description'
+            ],
         ],
         'object' => [
             'description' => 'Create an end object with the specified name.  Use --under optionally to specify an existing parent node id or name, and --primary to make it the primary object under that node',
@@ -111,13 +123,13 @@ class MenuManagerCommand extends Command
             'validate' => [
                 'name'
             ],
-            'options' => ['no-create', 'group', 'before', 'after', 'under'],
+            'options' => ['uri', 'create'],
         ],
         'structure' => [
             'description' => 'Return a CLI output of a given menu structure, or the default group if not specified.  Use --node to "lazy load" a portion of the structure.  The node must exist in the group',
             'arg_map' => [ 'arg1' => 'group' ],
             'validate' => [ 'group' ],
-            'options' => ['node', 'settings', 'group'],
+            'options' => ['node', 'settings', 'group', 'lean'],
             'unset' => [ 'no-create'],
         ]
     ];
@@ -137,8 +149,9 @@ class MenuManagerCommand extends Command
     public function handle()
     {
         //We need an action first to determine all other tasks
-        $command = $this->argument('action');
+        $command = strtolower($this->argument('action'));
 
+        //Make sure command is recognized
         if($command === 'commands' || !array_key_exists($command, $this->commands)) {
             if($command !== 'commands'){
                 $this->error(' Command "' . $command . '" is not recognized ');
@@ -155,17 +168,6 @@ class MenuManagerCommand extends Command
         $comm = $this->commands[$command];
         $args = $this->arguments();
         $opts = $this->options();
-        if(!empty($comm['arg_map'])){
-            foreach($comm['arg_map'] as $from => $to) {
-                $args[$to] = $args[$from];
-                unset($args[$from]);
-            }
-        }else{
-            // default
-            $args['name'] = empty($args['arg1']) ? '' : $args['arg1'];
-            unset($args['arg1']);
-        }
-
         //Unset system options for clarity
         unset($opts['help']);
         unset($opts['quiet']);
@@ -175,6 +177,20 @@ class MenuManagerCommand extends Command
         unset($opts['no-ansi']);
         unset($opts['no-interaction']);
         unset($opts['env']);
+
+        //Map argument names for models
+        if(!empty($comm['arg_map'])){
+            foreach($comm['arg_map'] as $from => $to) {
+                $args[$to] = $args[$from];
+                unset($args[$from]);
+            }
+        }else{
+            // default
+            $args['name'] = empty($args['arg1']) ? '' : $args['arg1'];
+            unset($args['arg1']);
+            $args['description'] = empty($args['arg2'] ? '' : $args['arg2']);
+            unset($args['arg2']);
+        }
 
         //Unset options with default values if specified
         if(!empty($comm['unset'])){
@@ -187,7 +203,15 @@ class MenuManagerCommand extends Command
         $allowed = !empty($comm['options']) ? $comm['options'] : [];
         foreach ($opts as $opt => $val) {
             if(!is_null($val)){
-                if(!in_array($opt, $allowed)){
+                if(is_bool($val)){
+                    //boolean values only represent flags and cannot be passed by user via CLI
+                    if($val === true && !in_array($opt, $allowed)){
+                        $disallowed[] = $opt;
+                    }else if(in_array($opt, $allowed)){
+                        continue;
+                    }
+                    //else will be unset
+                }else if(!empty($this->optionDefaults[$opt]) && $this->optionDefaults[$opt] !== $val && !in_array($opt, $allowed)){
                     //A non-null, non-allowed value; error.
                     $disallowed[] = $opt;
                 }else{
