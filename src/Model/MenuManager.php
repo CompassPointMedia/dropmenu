@@ -322,7 +322,6 @@ class MenuManager extends Model {
             'after' => '',
             'primary' => '',
             'secondary' => '',
-            'return-node-id' => false,              //return a node's id only, if present
         ];
 
         // process arguments
@@ -345,7 +344,6 @@ class MenuManager extends Model {
             'under' => $arguments['under'] ? : '',
             'before' => $arguments['before'] ? : '',
             'after' => $arguments['after'] ? : '',
-
         ]);
         if(!$node){
             throw new \Exception('Call to method node() did not return any values');

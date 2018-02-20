@@ -80,8 +80,7 @@ class MenuManagerCommand extends Command
     private $commands = [
         'commands' => [],
         'group' => [
-            'description' => 'Create a taxonomic group with the specified name. Returns created or existing group id',
-            'required' => [],
+            'description' => 'Creates or returns id of a specified taxonomic group (menu).  No arguments, and group name will be assumed to be `default`',
             'options' => ['no-create'],
             'unset' => ['group'],
             'arg_map' => [
@@ -90,7 +89,7 @@ class MenuManagerCommand extends Command
             ],
         ],
         'node' => [
-            'description' => 'Create a node (navigational node). Use --under to specify name or id of parent node and --group to specify taxonomy group (default taxonomy group is simply called `default`).  Returns an array of the group id, created node id, and the parent node id (or NULL)',
+            'description' => 'Creates or returns the id of a specified node, and assigns it to the specified or default --group [group must exist].  Use --under <node-name> to place the node under another node.  Use --before and --after position the node horizontally [this sets the `priority` field(s)].  A node of the same name cannot exist in the same location on the tree.  By default a node already used somewhere else on the tree will be "re-used" for the specified position as long as it\'s different, but in the same group.  This mode can be changed to always recycle nodes, even if in other groups only, OR create a new node even if a node by that name exists.  See `$nodeCreateMode` in the coding.  Returns an array of the group id, created node id, and the parent node id (or NULL)',
             'arg_map' => [
                 'arg1' => 'name',
                 'arg2' => 'description',
@@ -101,7 +100,7 @@ class MenuManagerCommand extends Command
             'options' => ['no-create', 'group', 'before', 'after', 'under'],
         ],
         'nodeobject' => [
-            'description' => 'Create a new navigational node and a primary object.  Use --under, --before, or --after optionally to specify an existing parent node id or name, and --group to specify an existing group.  Using --group is only necessary when the node in the option is part of multiple groups.  Note: this can only be used to create a new navigational node and object together.  Use `'.self::META_SIGNATURE_NAME.' object {object-name} --under {existing-node-name}` to create a new object under an existing node',
+            'description' => 'Creates or uses a node, using --under, --before, and --after as for `node`, and attaches a NEW object of the same name to it as primary.  Use --object-name and --object-description if you want the object name and description to be different.  Use `'.self::META_SIGNATURE_NAME.' object {object-name} --under {existing-node-name}` to create a new object under an existing node',
             'arg_map' => [
                 'arg1' => 'name',
                 'arg2' => 'description',
@@ -115,7 +114,7 @@ class MenuManagerCommand extends Command
             ],
         ],
         'object' => [
-            'description' => 'Create an end object with the specified name.  Use --under optionally to specify an existing parent node id or name, and --primary to make it the primary object under that node',
+            'description' => 'Creates an end object with the specified name.  Use --under optionally to specify an existing parent node id or name, and --primary to make it the primary object under that node',
             'arg_map' => [
                 'arg1' => 'name',
                 'arg2' => 'description',
@@ -126,8 +125,10 @@ class MenuManagerCommand extends Command
             'options' => ['uri', 'create'],
         ],
         'structure' => [
-            'description' => 'Return a CLI output of a given menu structure, or the default group if not specified.  Use --node to "lazy load" a portion of the structure.  The node must exist in the group',
-            'arg_map' => [ 'arg1' => 'group' ],
+            'description' => 'Output the hierarchical structure of a group.  Use --settings to inject settings in the root.  Specify --node <name-or-id> to load only that branch of the tree.  The `base_uri` value will still be considered from the root of the tree.  This can be used for "lazy loading" of a section of a nav menu.  The node must exist in the group',
+            'arg_map' => [
+                'arg1' => 'group'
+            ],
             'validate' => [ 'group' ],
             'options' => ['node', 'settings', 'group', 'lean'],
             'unset' => [ 'no-create'],
