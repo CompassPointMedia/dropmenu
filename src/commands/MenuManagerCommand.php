@@ -43,6 +43,7 @@ namespace Compasspointmedia\Julietmenu;
 use Illuminate\Console\Command;
 # use Illuminate\Support\Facades\Config;
 use Compasspointmedia\Julietmenu\Model\MenuManager;
+use Compasspointmedia\Julietmenu\Model\JulietUtils as Utils;
 
 class MenuManagerCommand extends Command
 {
@@ -287,7 +288,10 @@ class MenuManagerCommand extends Command
         //This might be modified if say the user demanded a verbose response etc.
         //However the intended purpose is to pipe returned values as arguments to other commands.
         if(!is_null($return) && !$this->option('no-interaction')) {
-            if(is_array($return)){
+            if(Utils::is_2d_array($return)){
+                //for now just print it out; soon we'll migrate to JSON
+                print_r($return);
+            }else if(is_array($return)){
                 echo implode(',',$return);
             }else{
                 echo $return;

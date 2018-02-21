@@ -91,4 +91,12 @@ class JulietUtils {
         }
         return $return;
     }
+    
+    static function is_2d_array($array = []){
+        if(!$array) return false;
+        foreach($array as $v){
+            if(is_array($v)) return true;
+        }
+        return false;
+    }
 }
